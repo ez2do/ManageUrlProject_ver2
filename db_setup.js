@@ -1,9 +1,6 @@
 const { Pool } = require('pg');
-// const dotenv = require('dotenv');
 
-// dotenv.config();
-
-const pool = new Pool({
+var pool = new Pool({
     user: 'postgres',
     host: 'localhost',
     database: 'ManageUrlProject',
@@ -89,5 +86,7 @@ pool.on('connect', () => {
         console.log('Can not create "daily_domain" table:\n', err);
     });
 
-    await pool.end();
+    // await pool.end();
 })()
+
+module.exports = {pool};

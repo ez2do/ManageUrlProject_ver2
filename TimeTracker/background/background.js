@@ -41,32 +41,46 @@ chrome.windows.onCreated.addListener(function (window) {
 
   //'midnight reset' not exist, create it
   var nextMidnight = getNextMidnight(new Date());
-  midnightReset = setTimeout(function () {
+  midnightReset = setTimeout(async function () {
     //stop counting time of domains
-    clearAllIntervals(intervals);
+    await clearAllIntervals(intervals);
     //update local storage to db and clear local storage
-    updateToDBAndReset();
+    await updateToDBAndReset();
     //recounting
     chrome.tabs.get(currentTabId, function (tab) {
       startCounting(tab);
     });
   }, nextMidnight.getTime() - (new Date()).getTime());
-// }, 5 * 1000);
+  // }, 5 * 1000);
 });
 
 //handle when user create new tab or switching between tabs
-chrome.tabs.onActivated.addListener(function (activeInfo) {
+chrome.tabs.onActivated.addListener(async function (activeInfo) {
   //if new day, update daily_domain to db and reset urls, domains, else load from storage
-  if (!checkDate()) {
-    updateToDBAndReset();
-  } else {
-    if (firstOpen) {
-      localLoad();
-      firstOpen = false;
+  await chrome.storage.local.get(['date'], function (result) {
+    //if result == null, create 'date'
+    if (!result['date']) {
+      chrome.storage.local.set({ date: getDateString(new Date()) }, function () {
+        console.log('Initialize date property');
+      });
     }
-  }
+    //if different dates
+    else if(!compareTimeByDateString(getDateString(new Date()), result.date)){
+      console.log('Different day');
+      updateToDBAndReset();
+    }
+    //else, if it's the first open, load urls and domains from local storage
+    else{
+      if(firstOpen){
+        console.log('First open');
+        localLoad();
+        firstOpen = false;
+      }
+    }
+
+  });
   currentTabId = activeInfo.tabId;
-  chrome.tabs.get(activeInfo.tabId, function (tab) {
+  await chrome.tabs.get(activeInfo.tabId, function (tab) {
     startCounting(tab);
   });
 });
@@ -120,7 +134,6 @@ function getNextMidnight(today) {
   var tomorrow = new Date();
   tomorrow.setDate(today.getDate() + 1);
   var midnight = new Date(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate(), 0, 0, 0, 0);
-  console.log('Next midnight: ', midnight);
   return midnight;
 }
 
@@ -139,12 +152,13 @@ async function localLoad() {
     domains = {};
     var domainsInStorage = result.domains;
     if (Object.keys(domainsInStorage).length != 0) {
+      console.log('Load', Object.keys(domainsInStorage).length, 'domains from local storage');
       for (domain_name of Object.keys(domainsInStorage)) {
         domain = domainsInStorage[domain_name];
         domains[domain_name] = new Domain(domain.name, domain.visit, domain.duration, domain.date);
       }
     }
-    console.log(domains);
+    console.log('domains:',domains);
   });
 }
 
@@ -180,9 +194,6 @@ function getTimeString(time) {
 async function addDomainToDict(domainString) {
   var domainObj = new Domain(currentUrl, 0, 0, getDateString(new Date()));
   domains[domainString] = domainObj;
-  await chrome.storage.local.set({ domains: domains }, function () {
-    console.log(`Add domain ${domainString} to storage`);
-  })
 }
 
 //start counting when activate
@@ -241,33 +252,23 @@ function postDailyDomainToDB(domain) {
   oReq.send(JSON.stringify({ domain: domain }));
 }
 
-async function updateToDBAndReset() {
-  for (domain of Object.keys(domains)) {
-    await postDailyDomainToDB(domains[domain]);
-  }
+function reset(){
+  console.log('Reset url and domains');
   urls = [];
   domains = {};
-  console.log('urls:', urls, 'domain:', domains);
-  await chrome.storage.local.set({ urls: [], domains: {}, date: getDateString(new Date()) }, function () {
-    console.log('Day pass, reset all');
-  });
 }
 
-async function checkDate() {
-  //return true if today is the same day as 'date' in storage
-  await chrome.storage.local.get(['date'], function (result) {
-    //if result == null, create 'date'
-    if (!result['date']) {
-      chrome.storage.local.set({ date: getDateString(new Date()) }, function () {
-        console.log('Initialize date property');
-      });
-      return false;
+async function updateToDBAndReset() {
+  //update all data from local storage to db
+  await chrome.storage.local.get(['domains'], async function(result){
+    let localStorageDomains = result.domains;
+    for(domain_name of Object.keys(localStorageDomains)){
+      let domain = localStorageDomains[domain_name];
+      await postDailyDomainToDB(domain);
+      await console.log(`Posting ${domain.name} to daily domain db`);
     }
-    //if different dates
-    else if (!compareTimeByDateString(getDateString(new Date()), result.date)) {
-      //put all data to database and clear in the local storage
-      return false;
-    }
-    return true;
+  });
+  await chrome.storage.local.set({ urls: [], domains: {}, date: getDateString(new Date()) }, function () {
+    console.log('Day pass, reset all');
   });
 }

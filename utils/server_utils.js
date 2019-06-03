@@ -11,15 +11,14 @@ const metascraper = require('metascraper')([
     require('metascraper-url')()
 ]);
 
-dotenv.config();
-
-const pool = new Pool({
-    user: 'postgres',
-    host: 'localhost',
-    database: 'ManageUrlProject',
-    password: 'tuananh123',
-    port: 5432
-});
+// const pool = new Pool({
+//     user: 'postgres',
+//     host: 'localhost',
+//     database: 'ManageUrlProject',
+//     password: 'tuananh123',
+//     port: 5432
+// });
+var pool = require('../db_setup').pool;
 
 var postLink = async (targetUrl, url_table, res) => {
     try {
@@ -32,7 +31,6 @@ var postLink = async (targetUrl, url_table, res) => {
         //get information from url
         var link = await got(targetUrl);
         var link_info = await metascraper({ html: link.body, url: link.url });
-        console.log('link_info:', link_info);
 
         //check whether url already exists in the database
         await pool.query({

@@ -7,17 +7,7 @@ const cors = require('cors');
 const moment = require('moment');
 const fs = require('fs');
 const path = require('path');
-const extractDomain = require('extract-domain');
-const got = require('got');
 const urlExists = require('url-exists');
-const metascraper = require('metascraper')([
-    require('metascraper-description')(),
-    require('metascraper-image')(),
-    require('metascraper-logo')(),
-    require('metascraper-publisher')(),
-    require('metascraper-title')(),
-    require('metascraper-url')()
-]);
 // const dotenv = require('dotenv');
 
 var certOptions = {
@@ -28,17 +18,18 @@ var certOptions = {
 // dotenv.config();
 
 //connect to database
-const pool = new Pool({
-    user: 'postgres',
-    host: 'localhost',
-    database: 'ManageUrlProject',
-    password: 'tuananh123',
-    port: 5432
-});
+// const pool = new Pool({
+//     user: 'postgres',
+//     host: 'localhost',
+//     database: 'ManageUrlProject',
+//     password: 'tuananh123',
+//     port: 5432
+// });
+// var pool = require('./db_setup').pool;
 
-pool.on('connect', () => {
-    console.log('Connect to the database');
-});
+// pool.on('connect', () => {
+//     console.log('Server: Connect to the database');
+// });
 
 var app = express();
 
@@ -131,41 +122,41 @@ app.delete('/collections/:collection_id/:link_id', (req, res) => {
 });
 
 //get all daily domains in 1 day
-app.get('/daily_domains/:date', (req, res) => {
-    //form of date: 'yyyy-mm-dd'
-    var date = moment(req.params.date, 'YYYY-MM-DD HH:mm:ss');
-    if (!date.isValid()) {
-        return res.send({
-            success: false,
-            message: 'Date param is not valid'
-        });
-    }
-    console.log(date);
-    pool.query({
-        text: `SELECT * FROM daily_domain WHERE DATE_TRUNC('day', date) = $1`,
-        values: [date]
-    }).then((result) => {
-        if (result.rowCount == 0) {
-            console.log('There is no domain today');
-            res.send({
-                success: false,
-                message: 'There is no domain today'
-            });
-        } else {
-            res.send({
-                success: true,
-                rowCount: result.rowCount,
-                rows: result.rows
-            });
-        }
-    }).catch((err) => {
-        console.log('Catch an error\n', err);
-        res.send({
-            success: false,
-            error: err
-        });
-    });
-});
+// app.get('/daily_domains/:date', (req, res) => {
+//     //form of date: 'yyyy-mm-dd'
+//     var date = moment(req.params.date, 'YYYY-MM-DD HH:mm:ss');
+//     if (!date.isValid()) {
+//         return res.send({
+//             success: false,
+//             message: 'Date param is not valid'
+//         });
+//     }
+//     console.log(date);
+//     pool.query({
+//         text: `SELECT * FROM daily_domain WHERE DATE_TRUNC('day', date) = $1`,
+//         values: [date]
+//     }).then((result) => {
+//         if (result.rowCount == 0) {
+//             console.log('There is no domain today');
+//             res.send({
+//                 success: false,
+//                 message: 'There is no domain today'
+//             });
+//         } else {
+//             res.send({
+//                 success: true,
+//                 rowCount: result.rowCount,
+//                 rows: result.rows
+//             });
+//         }
+//     }).catch((err) => {
+//         console.log('Catch an error\n', err);
+//         res.send({
+//             success: false,
+//             error: err
+//         });
+//     });
+// });
 
 app.post('/domains', (req, res) => {
     var domain = req.body.domain;
