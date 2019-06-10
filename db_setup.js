@@ -18,9 +18,9 @@ pool.on('connect', () => {
         `CREATE TABLE IF NOT EXISTS
     collection(
         id SERIAL NOT NULL PRIMARY KEY,
-        name VARCHAR(100) NOT NULL
+        name VARCHAR(100) NOT NULL UNIQUE
     );
-        INSERT INTO collection(name) VALUES('default')`
+        INSERT INTO collection(name) VALUES('default') ON CONFLICT DO NOTHING`
     ).then((res) => {
         console.log('Create "collection" table successfully');
     }).catch((err) => {
