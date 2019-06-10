@@ -1,10 +1,12 @@
 class Domain {
-  constructor(url, visit, duration, dateString) {
+  constructor(url, visit, duration, dateString, weekDay, networkTraffic) {
     //get domain from url
     this.name = getDomain(url);
     this.visit = visit;
     this.duration = duration;    //number of seconds
     this.date = dateString;
+    this.weekDay = weekDay;
+    this.networkTraffic = networkTraffic;
   }
 
   getDuration() {
@@ -14,6 +16,10 @@ class Domain {
   //increase duration by 1 second
   increaseTime() {
     this.duration += 1;
+  }
+
+  increaseTraffic(traffic) {
+    this.networkTraffic += traffic;
   }
 
   //increase visit time
@@ -31,6 +37,7 @@ var currentDomainObject;
 var intervals = [];
 var midnightReset;
 var firstOpen = true;
+var attached = false;
 
 //load data from localStorage
 chrome.windows.onCreated.addListener(function (window) {
@@ -44,8 +51,8 @@ chrome.windows.onCreated.addListener(function (window) {
   midnightReset = setTimeout(async function () {
     //stop counting time of domains
     await clearAllIntervals(intervals);
-    //update local storage to db and clear local storage
-    await updateToDBAndReset();
+    //update domains to db and clear local storage
+    await midnightUpdateAndReset();
     //recounting
     chrome.tabs.get(currentTabId, function (tab) {
       startCounting(tab);
@@ -56,6 +63,9 @@ chrome.windows.onCreated.addListener(function (window) {
 
 //handle when user create new tab or switching between tabs
 chrome.tabs.onActivated.addListener(async function (activeInfo) {
+  console.log('on activated at', activeInfo.tabId);
+  currentTabId = activeInfo.tabId;
+  attachTab(activeInfo.tabId);
   //if new day, update daily_domain to db and reset urls, domains, else load from storage
   await chrome.storage.local.get(['date'], function (result) {
     //if result == null, create 'date'
@@ -65,21 +75,19 @@ chrome.tabs.onActivated.addListener(async function (activeInfo) {
       });
     }
     //if different dates
-    else if(!compareTimeByDateString(getDateString(new Date()), result.date)){
+    else if (!compareTimeByDateString(getDateString(new Date()), result.date)) {
       console.log('Different day');
       updateToDBAndReset();
     }
     //else, if it's the first open, load urls and domains from local storage
-    else{
-      if(firstOpen){
+    else {
+      if (firstOpen) {
         console.log('First open');
         localLoad();
         firstOpen = false;
       }
     }
-
   });
-  currentTabId = activeInfo.tabId;
   await chrome.tabs.get(activeInfo.tabId, function (tab) {
     startCounting(tab);
   });
@@ -89,6 +97,7 @@ chrome.tabs.onActivated.addListener(async function (activeInfo) {
 chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
   //if user change the url
   if (changeInfo.url != null && currentUrl != null && changeInfo.url != currentUrl) {
+    attachTab(currentTabId);
     //if currentTabId != null, avoid case when updating run before activate
     console.log('Update');
     if (currentTabId) {
@@ -110,6 +119,35 @@ chrome.windows.onRemoved.addListener(function (windowId) {
   firstOpen = true;
   currentTabId = null;
   currentUrl = null;
+});
+
+chrome.debugger.onEvent.addListener(function (source, method, params) {
+  var localTraffic = 0;
+  if(!attached){
+    console.log('not attached');
+    return;
+  }
+
+  if (method == "Network.loadingFinished") {
+    chrome.debugger.sendCommand({
+      tabId: currentTabId
+    }, "Network.getResponseBody", { requestId: params.requestId }, function (result) {
+      console.log(result);
+      if (result.body.length) {
+        var traffic = Math.floor(result.body.length * 4 / 3) ? result.body.length * 2 : result.base64Encoded; //traffic in bytes
+        if (!domains[currentDomainString]) {
+          localTraffic += traffic;
+        } else {
+          domains[currentDomainString].increaseTraffic(localTraffic + traffic);
+          localTraffic = 0;
+        }
+      }
+    });
+  }
+});
+
+chrome.debugger.onDetach.addListener(function(){
+  console.log('on detach');
 });
 
 function getDomain(urlString) {
@@ -139,12 +177,12 @@ function getNextMidnight(today) {
 
 //load urls and domains from local storage
 async function localLoad() {
+  console.log('Load urls and domains from local storage');
   await chrome.storage.local.get(['urls'], function (result) {
     if (result.urls.length == 0)
       urls = [];
     else {
       urls = result.urls;
-      console.log('urls:', urls);
     }
   });
   //domains in the storage don't have class Domain, so need to be convert to class Domain
@@ -155,10 +193,9 @@ async function localLoad() {
       console.log('Load', Object.keys(domainsInStorage).length, 'domains from local storage');
       for (domain_name of Object.keys(domainsInStorage)) {
         domain = domainsInStorage[domain_name];
-        domains[domain_name] = new Domain(domain.name, domain.visit, domain.duration, domain.date);
+        domains[domain_name] = new Domain(domain.name, domain.visit, domain.duration, domain.date, domain.weekDay, domain.networkTraffic);
       }
     }
-    console.log('domains:',domains);
   });
 }
 
@@ -192,7 +229,7 @@ function getTimeString(time) {
 }
 
 async function addDomainToDict(domainString) {
-  var domainObj = new Domain(currentUrl, 0, 0, getDateString(new Date()));
+  var domainObj = new Domain(currentUrl, 0, 0, getDateString(new Date()), new Date().getDay(), 0);
   domains[domainString] = domainObj;
 }
 
@@ -252,23 +289,46 @@ function postDailyDomainToDB(domain) {
   oReq.send(JSON.stringify({ domain: domain }));
 }
 
-function reset(){
-  console.log('Reset url and domains');
-  urls = [];
-  domains = {};
-}
-
 async function updateToDBAndReset() {
   //update all data from local storage to db
-  await chrome.storage.local.get(['domains'], async function(result){
+  await chrome.storage.local.get(['domains'], async function (result) {
     let localStorageDomains = result.domains;
-    for(domain_name of Object.keys(localStorageDomains)){
+    for (domain_name of Object.keys(localStorageDomains)) {
       let domain = localStorageDomains[domain_name];
       await postDailyDomainToDB(domain);
       await console.log(`Posting ${domain.name} to daily domain db`);
     }
   });
-  await chrome.storage.local.set({ urls: [], domains: {}, date: getDateString(new Date()) }, function () {
+  await chrome.storage.local.set({ domains: {}, date: getDateString(new Date()) }, function () {
     console.log('Day pass, reset all');
   });
 }
+
+async function midnightUpdateAndReset() {
+  for (domain_name of Object.keys(domains)) {
+    await postDailyDomainToDB(domains[domain_name]);
+    await console.log(`Posting ${domain_name} to daily domain db`);
+  }
+  domains = {};
+  await chrome.storage.local.set({ domains: {}, date: getDateString(new Date()) }, function () {
+    console.log('Day pass, reset all');
+  });
+}
+
+function attachTab(tabId) {
+  var protocolVersion = '1.0';
+  chrome.debugger.attach({
+    tabId: tabId
+  }, protocolVersion, function () {
+    if (chrome.runtime.lastError) {
+      console.log('error when attach', chrome.runtime.lastError.message);
+      return;
+    }
+    chrome.debugger.sendCommand({ tabId: tabId }, "Network.enable");
+    console.log('attach to tab:', tabId);
+    attached = true;
+  });
+}
+
+
+

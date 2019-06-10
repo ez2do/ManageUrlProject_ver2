@@ -15,22 +15,6 @@ var certOptions = {
     cert: fs.readFileSync(path.resolve('./server.crt'))
 }
 
-// dotenv.config();
-
-//connect to database
-// const pool = new Pool({
-//     user: 'postgres',
-//     host: 'localhost',
-//     database: 'ManageUrlProject',
-//     password: 'tuananh123',
-//     port: 5432
-// });
-// var pool = require('./db_setup').pool;
-
-// pool.on('connect', () => {
-//     console.log('Server: Connect to the database');
-// });
-
 var app = express();
 
 app.use(bodyParser.json());

@@ -244,9 +244,9 @@ var addDomain = async (domain_name, domain_table, res) => {
 
 var addDailyDomain = (domain, daily_domain_table, res) => {
     pool.query({
-        text: `INSERT INTO ${daily_domain_table}(name, visitCount, duration, date)
-            VALUES($1, $2, $3, $4)`,
-        values: [domain.name, domain.visit, domain.duration, domain.date]
+        text: `INSERT INTO ${daily_domain_table}(name, visitCount, duration, date, weekDay, networkTraffic)
+            VALUES($1, $2, $3, $4, $5, $6)`,
+        values: [domain.name, domain.visit, domain.duration, domain.date, domain.weekDay, domain.networkTraffic]
     }).then((result) => {
         res.send({
             success: true,

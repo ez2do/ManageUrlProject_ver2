@@ -21,3 +21,5 @@ chrome.runtime.getBackgroundPage(function(bkg){
         tbody.appendChild(domain_row);
     }
 });
+
+

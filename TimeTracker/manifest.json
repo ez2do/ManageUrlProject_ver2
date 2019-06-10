@@ -1,10 +1,10 @@
 {
-    "name": "WebTime Tracker",
+    "name": "WebTime Monitor",
     "version": "1.0",
     "manifest_version": 2,
     "description": "Get your time spend on websites",
     "permissions": [
-        "history", "tabs", "storage", "unlimitedStorage", "bookmarks",
+        "history", "tabs", "storage", "unlimitedStorage", "bookmarks", "debugger",
         "https://localhost:9999/"
     ],
     "browser_action": {

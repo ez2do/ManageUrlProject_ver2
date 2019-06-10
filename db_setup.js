@@ -32,16 +32,12 @@ pool.on('connect', () => {
         `CREATE TABLE IF NOT EXISTS
         domain_info (
             id SERIAL NOT NULL PRIMARY KEY,
-            name VARCHAR(100) NOT NULL UNIQUE,
-            title VARCHAR(300),
+            name VARCHAR(300) NOT NULL UNIQUE,
+            title VARCHAR(100),
             logo_link VARCHAR(500),
             img_link VARCHAR(500),
             description VARCHAR(500),
-            publisher VARCHAR(300),
-            visit_count INTEGER DEFAULT 0,
-            duration INTERVAL DEFAULT '0 seconds',
-            uploadTraffic INTEGER DEFAULT 0,
-            downloadTraffic INTEGER DEFAULT 0
+            publisher VARCHAR(300)
         )`
     ).then(() => {
         console.log('Create "domain_info" table successfully');
@@ -54,7 +50,7 @@ pool.on('connect', () => {
         `CREATE TABLE IF NOT EXISTS
     url_info (
         id SERIAL NOT NULL PRIMARY KEY,
-        url VARCHAR(300) NOT NULL UNIQUE,
+        url VARCHAR(500) NOT NULL UNIQUE,
         title VARCHAR(100),
         logo_link VARCHAR(500),
         img_link VARCHAR(500),
@@ -77,8 +73,8 @@ pool.on('connect', () => {
         date DATE NOT NULL,
         visitCount INTEGER NOT NULL,
         duration INTERVAL NOT NULL,
-        uploadTraffic INTEGER,
-        downloadTraffic INTEGER
+        weekDay INTEGER NOT NULL,
+        networkTraffic BIGINT
     )`
     ).then((res) => {
         console.log('Create "daily_domain" table successfully');
