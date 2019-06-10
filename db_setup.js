@@ -22,7 +22,7 @@ pool.on('connect', () => {
     );
         INSERT INTO collection(name) VALUES('default') ON CONFLICT DO NOTHING`
     ).then((res) => {
-        console.log('Create "collection" table successfully');
+        console.log('Connect to "collection" table successfully');
     }).catch((err) => {
         console.log('Can not create "collection" table\n', err);
     });
@@ -40,7 +40,7 @@ pool.on('connect', () => {
             publisher VARCHAR(300)
         )`
     ).then(() => {
-        console.log('Create "domain_info" table successfully');
+        console.log('Connect to "domain_info" table successfully');
     }).catch((err) => {
         console.log('Can not create "domain_info" table:\n', err);
     });
@@ -59,7 +59,7 @@ pool.on('connect', () => {
         collection_id INTEGER REFERENCES collection(id)
     )`
     ).then((res) => {
-        console.log('Create "url_info" table successfully');
+        console.log('Connect to "url_info" table successfully');
     }).catch((err) => {
         console.log('Can not create "url_info" table:\n', err);
     });
@@ -77,7 +77,7 @@ pool.on('connect', () => {
         networkTraffic BIGINT
     )`
     ).then((res) => {
-        console.log('Create "daily_domain" table successfully');
+        console.log('Connect to "daily_domain" table successfully');
     }).catch((err) => {
         console.log('Can not create "daily_domain" table:\n', err);
     });
