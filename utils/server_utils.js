@@ -260,7 +260,45 @@ var addDailyDomain = (domain, daily_domain_table, res) => {
     })
 }
 
+var getDailyDomainByDuration = (duration, attribute, table, res) => {
+    pool.query({
+        text: `SELECT name, SUM(${attribute}) FROM ${table} 
+        WHERE date >= CURRENT_DATE - INTERVAL '1 ${duration}' GROUP BY name`,
+        values: []
+    }).then((result) => {
+        res.send({
+            success: true,
+            rowCount: result.rowCount,
+            rows: result.rows
+        });
+    }).catch((err) => {
+        res.send({
+            success: false,
+            error: err
+        })
+    })
+}
+
+var getDailyDomainByWeekDay = (attribute, table, res) => {
+    pool.query({
+        text: `SELECT weekDay, SUM(${attribute}) FROM ${table} GROUP BY weekDay`,
+        values: []
+    }).then((result) => {
+        res.send({
+            success: true,
+            rowCount: result.rowCount,
+            rows: result.rows
+        });
+    }).catch((err) => {
+        res.send({
+            success: false,
+            error: err
+        });
+    });
+}
+
 module.exports = {
     postLink, postCollection, getAll, getById, deleteById, getAllLinksOfCollection,
-    updateCollectionOfALink, updateCollection, addDomain, addDailyDomain
+    updateCollectionOfALink, updateCollection, addDomain, addDailyDomain, getDailyDomainByDuration,
+    getDailyDomainByWeekDay
 };

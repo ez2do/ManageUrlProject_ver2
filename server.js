@@ -22,8 +22,8 @@ app.use(cors());
 
 //de day cho do trong trang chu
 app.get('/', (req, res) => {
-    console.log('fail');
-    res.send('fail');
+    console.log('ok');
+    res.send('work ok');
     //utils.getAll('url_info', res);
 });
 
@@ -35,8 +35,8 @@ app.get('/links', (req, res) => {
 //add new link
 app.post('/links', (req, res) => {
     var targetUrl = req.body.url;
-    urlExists(targetUrl, (err,exists) => {
-        if(exists){
+    urlExists(targetUrl, (err, exists) => {
+        if (exists) {
             utils.postLink(targetUrl, 'url_info', res);
         }
     });
@@ -105,49 +105,17 @@ app.delete('/collections/:collection_id/:link_id', (req, res) => {
     utils.updateCollectionOfALink('url_info', link_id, 1, res);
 });
 
-//get all daily domains in 1 day
-// app.get('/daily_domains/:date', (req, res) => {
-//     //form of date: 'yyyy-mm-dd'
-//     var date = moment(req.params.date, 'YYYY-MM-DD HH:mm:ss');
-//     if (!date.isValid()) {
-//         return res.send({
-//             success: false,
-//             message: 'Date param is not valid'
-//         });
-//     }
-//     console.log(date);
-//     pool.query({
-//         text: `SELECT * FROM daily_domain WHERE DATE_TRUNC('day', date) = $1`,
-//         values: [date]
-//     }).then((result) => {
-//         if (result.rowCount == 0) {
-//             console.log('There is no domain today');
-//             res.send({
-//                 success: false,
-//                 message: 'There is no domain today'
-//             });
-//         } else {
-//             res.send({
-//                 success: true,
-//                 rowCount: result.rowCount,
-//                 rows: result.rows
-//             });
-//         }
-//     }).catch((err) => {
-//         console.log('Catch an error\n', err);
-//         res.send({
-//             success: false,
-//             error: err
-//         });
-//     });
-// });
+//attribute: duration, visit, network traffic
+//display by: day of week, interval: 1 day, 1 week, 1 month
+//click to a domain: show diagram for the chosen attribute
 
+//post domain to domain_info
 app.post('/domains', (req, res) => {
     var domain = req.body.domain;
     urlExists(domain, (err, exists) => {
-        if(exists){
+        if (exists) {
             utils.addDomain(domain, 'domain_info', res);
-        } else{
+        } else {
             res.send({
                 success: false,
                 message: 'url is not exists'
@@ -156,9 +124,39 @@ app.post('/domains', (req, res) => {
     })
 });
 
+//post daily domain to daily_domain table
 app.post('/daily_domains', (req, res) => {
     var domain = req.body.domain;
     utils.addDailyDomain(domain, 'daily_domain', res);
+});
+
+//get daily domain by attribute and duraion
+app.get('/daily_domains/:attribute/:duration', (req, res) => {
+    var attr_list = ['duration', 'visitCount', 'networkTraffic'];
+    var duration_list = ['week', 'month'];
+    var attribute = req.params.attribute, duration = req.params.duration;
+    if (!attr_list.includes(attribute) || !duration_list.includes(duration)) {
+        res.send({
+            success: false,
+            message: 'Bad request'
+        });
+    } else {
+        utils.getDailyDomainByDuration(duration, attribute, 'daily_domain', res);
+    }
+});
+
+//get info of daily_domain divided by day of week
+app.get('/daily_domains/group_by/week_day/:attribute', (req, res) => {
+    var attr_list = ['visitCount', 'duration', 'networkTraffic'];
+    var attr = req.params.attribute;
+    if (!attr_list.includes(attr)) {
+        res.send({
+            success: false,
+            message: 'Bad request'
+        });
+    } else {
+        utils.getDailyDomainByWeekDay(attr, 'daily_domain', res);
+    }
 })
 
 var server = https.createServer(certOptions, app, () => {
