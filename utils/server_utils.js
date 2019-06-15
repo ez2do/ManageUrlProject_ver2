@@ -11,13 +11,6 @@ const metascraper = require('metascraper')([
     require('metascraper-url')()
 ]);
 
-// const pool = new Pool({
-//     user: 'postgres',
-//     host: 'localhost',
-//     database: 'ManageUrlProject',
-//     password: 'tuananh123',
-//     port: 5432
-// });
 var pool = require('../db_setup').pool;
 
 var postLink = async (targetUrl, url_table, res) => {
@@ -297,8 +290,45 @@ var getDailyDomainByWeekDay = (attribute, table, res) => {
     });
 }
 
+var getDomainByName = (domain, domain_table, res) => {
+    pool.query({
+        text: `SELECT * FROM ${domain_table} WHERE name = $1`,
+        values: [domain]
+    }).then((result) => {
+        res.send({
+            success: true,
+            rowCount: result.rowCount,
+            rows : result.rows
+        });
+    }).catch((err) => {
+        res.send({
+            success: false,
+            error: err
+        });
+    })
+}
+
+var getWeeklyInfo = (domain, daily_domain_table, attribute, res) => {
+    pool.query({
+        text: `SELECT ${attribute}, date FROM ${daily_domain_table} 
+        WHERE name = $1 AND date >= CURRENT_DATE - INTERVAL '1 week'`,
+        values: [domain]
+    }).then((result) => {
+        res.send({
+            success: true,
+            rowCount: result.rowCount,
+            rows : result.rows
+        });
+    }).catch((err) => {
+        res.send({
+            success: false,
+            error: err
+        });
+    })
+}
+
 module.exports = {
     postLink, postCollection, getAll, getById, deleteById, getAllLinksOfCollection,
     updateCollectionOfALink, updateCollection, addDomain, addDailyDomain, getDailyDomainByDuration,
-    getDailyDomainByWeekDay
+    getDailyDomainByWeekDay, getDomainByName, getWeeklyInfo
 };

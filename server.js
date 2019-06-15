@@ -159,6 +159,27 @@ app.get('/daily_domains/group_by/week_day/:attribute', (req, res) => {
     }
 })
 
+//actually to get the domain_info
+app.post('/domains/get_info', (req, res) => {
+    var domain = req.body.domain;
+    utils.getDomainByName(domain, 'domain_info', res);
+})
+
+//get info of a link in 1 week, post body {domain: domain, attribure: attribute}
+app.post('/daily_domains/weekly', (req, res) => {
+    var domain = req.body.domain;
+    var attr = req.body.attribute;
+    var attr_list = ['visitCount', 'duration', 'networkTraffic'];
+    if (!attr_list.includes(attr)) {
+        res.send({
+            success: false,
+            message: 'Bad request'
+        });
+    } else {
+        utils.getWeeklyInfo(domain, 'daily_domain', attr, res);
+    }
+})
+
 var server = https.createServer(certOptions, app, () => {
     console.log('Listening on port 9999');
 }).listen(9999);
