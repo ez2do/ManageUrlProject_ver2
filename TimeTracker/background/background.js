@@ -132,7 +132,7 @@ chrome.debugger.onEvent.addListener(function (source, method, params) {
     chrome.debugger.sendCommand({
       tabId: currentTabId
     }, "Network.getResponseBody", { requestId: params.requestId }, function (result) {
-      console.log(result);
+      // console.log(result);
       if (result.body.length) {
         var traffic = Math.floor(result.body.length * 4 / 3) ? result.body.length * 2 : result.base64Encoded; //traffic in bytes
         if (!domains[currentDomainString]) {
@@ -330,5 +330,18 @@ function attachTab(tabId) {
   });
 }
 
+chrome.runtime.onMessageExternal.addListener(
+    function(request, sender, sendResponse) {
+      var res;
+      var sortedDomains = [];
+      for (domain_name of Object.keys(domains)) {
+        let domain = domains[domain_name];
+        sortedDomains.push(domain);
+      }
+      sortedDomains = sortedDomains.sort((a, b) => (a.duration < b.duration ? 1 : -1));
+      // console.log(sortedDomains);
+      res = sortedDomains;
+      sendResponse(res);        
+});
 
 

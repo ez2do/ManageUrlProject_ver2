@@ -4,29 +4,116 @@
 <head>
     <title>Web tracker</title>
     <meta charset="UTF-8" />
+    <link href="../assets/vendors/base/vendors.bundle.css" rel="stylesheet" type="text/css" />
+    <link href="../assets/demo/demo11/base/style.bundle.css" rel="stylesheet" type="text/css" />
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
         integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
     <link rel="stylesheet" href="popup.css">
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.2/css/all.css">
+<!-- Bootstrap core CSS -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet">
+<!-- Material Design Bootstrap -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/mdbootstrap/4.8.2/css/mdb.min.css" rel="stylesheet">
 </head>
 
 <body>
     <!-- List of current web page with time using -->
     <div class="container-fluid">
-        <table class="table">
-            <thead>
+        <div class="row">
+            <div class="col-3 mt-4 text-center" style="cursor: pointer; font-size: 15px" id="myStat">
+                <i class="fa fa-angle-double-left"></i>
+                Go to My Stat
+            </div>
+            <div class="col-12 mt-5">
+                <form class="row">
+                    <div class="col-3">
+                        <!--<label for="recipient-name" class="col-form-label"></label>-->
+                        <!--<input type="text" class="form-control" id="url_name">-->
+                        <select class="form-control m-input" id="tar_col">
+
+                        </select>
+                    </div>
+                    <div class="col-1" style="font-size: 20px; color: #99b3ff">
+                        <i class="la la-trash" id="delColBtn" style="cursor: pointer"></i>
+                    </div>
+                    <!--<div class="col-lg-1"></div>-->
+                    <div class="col-6">
+                        <!--<label for="recipient-name" class="col-form-label"></label>-->
+                        <input type="text" class="form-control" placeholder="Điền đường dẫn" id="url_name">
+                        <!--<span style="color: red">URL này đã có sẵn!</span>-->
+                    </div>
+
+                    <div class="col-2">
+                        <button type="button" class=" btn btn-primary" id="addUrlBtn">Add</button>
+                    </div>
+                </form>
+            </div>
+            <div class="col-12 mt-4">
+                <form class="row">
+                    <div class="col-3 text-center">
+                        <span style="font-size: 15px">New Collection</span>
+                    </div>
+                    <div class="col-1"></div>
+                    <div class="col-6">
+                        <!--<label for="recipient-name" class="col-form-label"></label>-->
+                        <input type="text" class="form-control" placeholder="Enter new Collection name" id="col_name" maxlength="16">
+                        <span class="text-success" id="newColSuccess">Successfully added new Collection!</span>
+                        <span class="text-danger" id="newColFail">You have this Collection already!</span>
+                    </div>
+                    <div class="col-2">
+                        <button type="button" class=" btn btn-primary" id="addColBtn">Add</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="col-12 row mt-4" style="font-size: 20px" id="urlContainer">
+
+            </div>
+            <div class="col-12 mt-4"></div>
+            <div class="col-4 mt-4">
+                <table class="table">
+                    <thead>
+                    <tr>
+                        <th scope="col">Internet Usage Chart (sec)</th>
+                    </tr>
+                    </thead>
+                </table>
+                <canvas class="mt-4" id="doughnutChart"></canvas>
+            </div>
+            <!--<canvas class="col-5 mt-4" id="doughnutChart"></canvas>-->
+            <table class="table col-6 mt-4" id="doughnutTable">
+                <thead>
                 <tr>
                     <th scope="col">#</th>
                     <th scope="col">Domain</th>
                     <th scope="col">Visit</th>
                     <th scope="col">Duration</th>
+                    <th scope="col">Network Usage</th>
                 </tr>
-            </thead>
-            <tbody id="table-body">
+                </thead>
+                <tbody id="table-body">
 
-            </tbody>
-        </table>
+                </tbody>
+            </table>
+        </div>
     </div>
 </body>
-<script src="popup.js"></script>
+
+<!--Axios-->
+<script src="axios.js"></script>
+<!-- JQuery -->
+<script src="jquery.min.js"></script>
+<!-- Bootstrap tooltips -->
+<script src="popper.min.js"></script>
+<!-- Bootstrap core JavaScript -->
+<script src="bootstrap.min.js"></script>
+<!-- MDB core JavaScript -->
+<script src="mdb.min.js"></script>
+
+
+<script type="text/javascript" src="popup.js"></script>
+
+
 
 </html>
